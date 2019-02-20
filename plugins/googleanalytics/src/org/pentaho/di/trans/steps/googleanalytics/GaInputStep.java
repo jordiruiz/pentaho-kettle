@@ -227,15 +227,20 @@ public class GaInputStep extends BaseStep implements StepInterface {
     String serviceAccount = environmentSubstitute( meta.getOAuthServiceAccount() );
     String OAuthKeyFile = environmentSubstitute( meta.getOAuthKeyFile() );
 
+    String connectionTimeout = environmentSubstitute( meta.getGaConnectionTimeout() );
+    String readTimeout = environmentSubstitute( meta.getGaReadTimeout() );
+
     if ( log.isDetailed() ) {
       logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.AppName.Label" ) + ": " + appName );
       logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.OauthAccount.Label" ) + ": " + serviceAccount );
       logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.KeyFile.Label" ) + ": " + OAuthKeyFile );
+      logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.ConnectTimeout.Label" ) + ": " + connectionTimeout );
+      logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.ReadTimeout.Label" ) + ": " + readTimeout );
     }
 
     try {
       // Create an Analytics object, and fetch what we can for later (account name, e.g.)
-      analytics = GoogleAnalyticsApiFacade.createFor( appName, serviceAccount, OAuthKeyFile ).getAnalytics();
+      analytics = GoogleAnalyticsApiFacade.createFor( appName, serviceAccount, OAuthKeyFile, connectionTimeout, readTimeout, log ).getAnalytics();
       // There is necessarily an account name associated with this, so any NPEs or other exceptions mean bail out
       accountName = analytics.management().accounts().list().execute().getItems().iterator().next().getName();
     } catch ( TokenResponseException tre ) {

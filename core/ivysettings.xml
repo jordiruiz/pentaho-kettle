@@ -7,9 +7,9 @@
     override="false" />
     
   <!-- Repository for Pentaho-hosted artifacts -->  
-  <property name="pentaho.resolve.repo" value="http://ivy-nexus.pentaho.org/content/groups/omni" override="false" />
-  <!-- Repository for External-hosted artifacts (Optional. Defaults to Pentaho-hosted.) -->
-  <property name="public.resolve.repo" value="${pentaho.resolve.repo}" override="false" />
+  <property name="pentaho.resolve.repo" value="http://ivy-nexus.pentaho.org/content/groups/omni" override="false" />  
+  <property name="public.resolve.repo" value="https://ivy-nexus.pentaho.org/repository/proxy-public-3rd-party-release" override="false" />
+  <property name="pentaho.resolve.repo2" value="https://nexus.pentaho.org/repository/proxy-pentaho-public-release-group" override="false" />
 
   <settings defaultResolver="pentaho-chained-resolver" />
   <include url="${ivy.default.settings.dir}/ivysettings-public.xml" />
@@ -25,7 +25,11 @@
       </dual>
       <ibiblio name="local-mvn" m2compatible="true" root="file://${maven.local.repo}" checkmodified="true" changingPattern=".*-SNAPSHOT.*" />
       <ibiblio name="public-maven" root="${public.resolve.repo}" m2compatible="true" />
+      <ibiblio name="pentaho-public-mvn" m2compatible="true" root="${pentaho.resolve.repo2}" />
     </chain>
   </resolvers>
+  <modules>
+    <module organisation="pentaho" name="metastore" resolver="pentaho-public-mvn"></module>
+  </modules>
   <caches lockStrategy="artifact-lock" resolutionCacheDir="${ivy.default.ivy.user.dir}/resol-cache${env.EXECUTOR_NUMBER}" />
 </ivysettings>

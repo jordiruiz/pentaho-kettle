@@ -45,20 +45,33 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+
+import org.pentaho.di.core.logging.LogChannelInterface;
+
+import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.core.exception.KettleFileException;
 import org.pentaho.di.core.util.Assert;
 import org.pentaho.di.core.vfs.KettleVFS;
+import org.apache.commons.vfs2.FileObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpRequest;
+
 public class GoogleAnalyticsApiFacade {
+  private static Class<?> PKG = GaInputStepMeta.class; // for i18n purposes
+
   private Analytics analytics;
   private final HttpTransport httpTransport;
+  private int connectionTimeout;
+  private int readTimeout;
+  private LogChannelInterface log;
 
   public static GoogleAnalyticsApiFacade createFor(
-    String application, String oauthServiceAccount, String oauthKeyFile )
+    String application, String oauthServiceAccount, String oauthKeyFile, String ConnectionTimeout, String ReadTimeout, LogChannelInterface Log )
     throws GeneralSecurityException, IOException, KettleFileException {
 
     return new GoogleAnalyticsApiFacade(
@@ -66,12 +79,50 @@ public class GoogleAnalyticsApiFacade {
       JacksonFactory.getDefaultInstance(),
       application,
       oauthServiceAccount,
-      new File( KettleVFS.getFileObject( oauthKeyFile ).getURL().getPath() )
+      new File( KettleVFS.getFileObject( oauthKeyFile ).getURL().getPath()),
+      ConnectionTimeout,
+      ReadTimeout,
+      Log
     );
   }
 
+  private HttpRequestInitializer setHttpTimeout(final HttpRequestInitializer requestInitializer) {
+	  return new HttpRequestInitializer() {
+	    @Override
+	    public void initialize(HttpRequest httpRequest) throws IOException {
+        if ( log.isDetailed() ) {
+          logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.ConnectTimeout.Label" ) + ": " + connectionTimeout + " (setHttpTimeout)");
+          logDetailed( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.ReadTimeout.Label" ) + ": " + readTimeout + " (setHttpTimeout)");
+        }
+
+	      requestInitializer.initialize(httpRequest);
+	      httpRequest.setConnectTimeout(connectionTimeout * 60000);  // connect timeout, default 3 minutes 
+	      httpRequest.setReadTimeout(readTimeout * 60000);  // read timeout, default 3 minutes
+	    }
+	  };
+  }
+
+  /**
+   * Log detailed.
+   *
+   * @param message the message
+   */
+  private void logDetailed( String message ) {
+    log.logDetailed( message );
+  }
+
+  /**
+   * Log detailed.
+   *
+   * @param message   the message
+   * @param arguments the arguments
+   */
+  private void logDetailed( String message, Object... arguments ) {
+    log.logDetailed( message, arguments );
+  }
+
   public GoogleAnalyticsApiFacade( HttpTransport httpTransport, JsonFactory jsonFactory, String application,
-                                   String oathServiceEmail, File keyFile )
+                                   String oathServiceEmail, File keyFile, String ConnectionTimeout, String ReadTimeout, LogChannelInterface Log)
     throws IOException, GeneralSecurityException {
 
     Assert.assertNotNull( httpTransport, "HttpTransport cannot be null" );
@@ -79,7 +130,25 @@ public class GoogleAnalyticsApiFacade {
     Assert.assertNotBlank( application, "Application name cannot be empty" );
     Assert.assertNotBlank( oathServiceEmail, "OAuth Service Email name cannot be empty" );
     Assert.assertNotNull( keyFile, "OAuth secret key file cannot be null" );
+    
+    log = Log;
 
+    try {
+      connectionTimeout = Integer.parseInt(ConnectionTimeout);
+    }
+    catch (NumberFormatException e)
+    {
+      connectionTimeout = 3;
+    }
+    
+    try {
+      readTimeout = Integer.parseInt(ReadTimeout);
+    }
+    catch (NumberFormatException e)
+    {
+      readTimeout = 3;
+    }
+    
     this.httpTransport = httpTransport;
 
     Credential credential = new GoogleCredential.Builder()
@@ -90,9 +159,13 @@ public class GoogleAnalyticsApiFacade {
       .setServiceAccountPrivateKeyFromP12File( keyFile )
       .build();
 
-    analytics = new Analytics.Builder( httpTransport, jsonFactory, credential )
+    /*analytics = new Analytics.Builder( httpTransport, jsonFactory, credential )
       .setApplicationName( application )
-      .build();
+      .build();*/
+    
+    analytics = new Analytics.Builder( httpTransport, jsonFactory, setHttpTimeout(credential) )
+    .setApplicationName( application )
+    .build();
   }
 
   public void close() throws IOException {
