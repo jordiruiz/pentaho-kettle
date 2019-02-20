@@ -108,6 +108,11 @@ public class GaInputStepDialog extends BaseStepDialog implements StepDialogInter
 
   private Button wGetProfiles;
 
+  private Label wlGaConnectionTimeout;
+  private TextVar wGaConnectionTimeout;
+  private Label wlGaReadTimeout;
+  private TextVar wGaReadTimeout;
+
   private Label wlQuSegment;
 
   private CCombo wQuSegment;
@@ -406,6 +411,46 @@ public class GaInputStepDialog extends BaseStepDialog implements StepDialogInter
     fdGetProfiles.top = new FormAttachment( wGaCustomProfile, margin );
     fdGetProfiles.right = new FormAttachment( 100, 0 );
     wGetProfiles.setLayoutData( fdGetProfiles );
+
+    // Google analytics connection timeout
+    wlGaConnectionTimeout = new Label( gConnect, SWT.RIGHT );
+    wlGaConnectionTimeout.setText( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.ConnectTimeout.Label" ) );
+    props.setLook( wlGaConnectionTimeout );
+
+    FormData fdlGaConnectionTimeout = new FormData();
+    fdlGaConnectionTimeout.top = new FormAttachment( wGaProfile, margin );
+    fdlGaConnectionTimeout.left = new FormAttachment( 0, 0 );
+    fdlGaConnectionTimeout.right = new FormAttachment( middle, -margin );
+    wlGaConnectionTimeout.setLayoutData( fdlGaConnectionTimeout );
+    wGaConnectionTimeout = new TextVar( transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wGaConnectionTimeout.addModifyListener( lsMod );
+    
+    props.setLook( wGaConnectionTimeout );
+    FormData fdGaConnectionTimeout = new FormData();
+    fdGaConnectionTimeout.top = new FormAttachment( wGaProfile, margin );
+    fdGaConnectionTimeout.left = new FormAttachment( middle, 0 );
+    fdGaConnectionTimeout.right = new FormAttachment( 100, 0 );
+    wGaConnectionTimeout.setLayoutData( fdGaConnectionTimeout );
+
+    // Google analytics read timeout
+    wlGaReadTimeout = new Label( gConnect, SWT.RIGHT );
+    wlGaReadTimeout.setText( BaseMessages.getString( PKG, "GoogleAnalyticsDialog.ReadTimeout.Label" ) );
+    props.setLook( wlGaReadTimeout );
+
+    FormData fdlGaReadTimeout = new FormData();
+    fdlGaReadTimeout.top = new FormAttachment( wGaConnectionTimeout, margin );
+    fdlGaReadTimeout.left = new FormAttachment( 0, 0 );
+    fdlGaReadTimeout.right = new FormAttachment( middle, -margin );
+    wlGaReadTimeout.setLayoutData( fdlGaReadTimeout );
+    wGaReadTimeout = new TextVar( transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wGaReadTimeout.addModifyListener( lsMod );
+    
+    props.setLook( wGaReadTimeout );
+    FormData fdGaReadTimeout = new FormData();
+    fdGaReadTimeout.top = new FormAttachment( wGaConnectionTimeout, margin );
+    fdGaReadTimeout.left = new FormAttachment( middle, 0 );
+    fdGaReadTimeout.right = new FormAttachment( 100, 0 );
+    wGaReadTimeout.setLayoutData( fdGaReadTimeout );
 
     /*************************************************
      * // GOOGLE ANALYTICS QUERY GROUP
@@ -1107,6 +1152,8 @@ public class GaInputStepDialog extends BaseStepDialog implements StepDialogInter
 
     meta.setGaProfileName( wGaProfile.getText() );
     meta.setGaAppName( wGaAppName.getText() );
+    meta.setGaConnectionTimeout( wGaConnectionTimeout.getText() );
+    meta.setGaReadTimeout( wGaReadTimeout.getText() );
     meta.setOauthServiceAccount( wOauthAccount.getText() );
     meta.setOAuthKeyFile( keyFilename.getText() );
 
@@ -1363,6 +1410,13 @@ public class GaInputStepDialog extends BaseStepDialog implements StepDialogInter
       wGaAppName.setText( input.getGaAppName() );
     }
 
+    if ( input.getGaConnectionTimeout() != null ) {
+      wGaConnectionTimeout.setText( input.getGaConnectionTimeout() );
+    }
+    if ( input.getGaReadTimeout() != null ) {
+      wGaReadTimeout.setText( input.getGaReadTimeout() );
+    }
+
     wOauthAccount.setText( Const.NVL( input.getOAuthServiceAccount(), "" ) );
     keyFilename.setText( Const.NVL( input.getOAuthKeyFile(), "" ) );
 
@@ -1545,7 +1599,10 @@ public class GaInputStepDialog extends BaseStepDialog implements StepDialogInter
       API = GoogleAnalyticsApiFacade.createFor(
         transMeta.environmentSubstitute( wGaAppName.getText() ),
         transMeta.environmentSubstitute( wOauthAccount.getText() ),
-        transMeta.environmentSubstitute( keyFilename.getText() )
+        transMeta.environmentSubstitute( keyFilename.getText() ), 
+        transMeta.environmentSubstitute( wGaConnectionTimeout.getText() ),
+        transMeta.environmentSubstitute( wGaReadTimeout.getText() ),
+        log
       );
     } catch ( Exception e ) {
       logError( BaseMessages.getString( PKG, "GoogleAnalytics.Error.UnableToLoadPrivateKey" ), e );

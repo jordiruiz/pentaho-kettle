@@ -75,6 +75,8 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
   public static final String PROPERTY_DATA_SOURCE_WEBPROP_ID = "ga:webPropertyId";
   public static final String PROPERTY_DATA_SOURCE_ACCOUNT_NAME = "ga:accountName";
   public static final String DEFAULT_GA_APPLICATION_NAME = "pdi-google-analytics-app";
+  public static final String DEFAULT_GA_CONNECTION_TIMEOUT = "3";
+  public static final String DEFAULT_GA_READ_TIMEOUT = "3";
 
   // The following is deprecated and removed by Google, and remains here only to allow old transformations to load
   // successfully in Spoon.
@@ -82,6 +84,9 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
 
   private String oauthServiceAccount;
   private String oauthKeyFile;
+
+  private String gaConnectionTimeout;
+  private String gaReadTimeout;
 
   private String gaAppName;
   private String gaProfileTableId;
@@ -126,6 +131,22 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
 
   public String[] getConversionMask() {
     return conversionMask;
+  }
+
+  public String getGaConnectionTimeout() {
+    return gaConnectionTimeout;
+  }
+
+  public void setGaConnectionTimeout( String gaConnectionTimeout ) {
+    this.gaConnectionTimeout = gaConnectionTimeout;
+  }
+
+  public String getGaReadTimeout() {
+    return gaReadTimeout;
+  }
+
+  public void setGaReadTimeout( String gaReadTimeout ) {
+    this.gaReadTimeout = gaReadTimeout;
   }
 
   public String getGaAppName() {
@@ -286,6 +307,8 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
     sort = "-ga:visits";
     gaAppName = DEFAULT_GA_APPLICATION_NAME;
     rowLimit = 0;
+    gaConnectionTimeout = DEFAULT_GA_CONNECTION_TIMEOUT;
+    gaReadTimeout = DEFAULT_GA_READ_TIMEOUT;
 
     // default is to have no key lookup settings
     allocate( 0 );
@@ -347,7 +370,7 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
 
   public String getXML() throws KettleValueException {
 
-    StringBuilder retval = new StringBuilder( 800 );
+    StringBuilder retval = new StringBuilder( 900 );
     retval.append( "    " ).append( XMLHandler.addTagValue( "oauthServiceAccount", oauthServiceAccount ) );
     retval.append( "    " ).append( XMLHandler.addTagValue( "appName", gaAppName ) );
     retval.append( "    " ).append( XMLHandler.addTagValue( "oauthKeyFile", oauthKeyFile ) );
@@ -367,6 +390,8 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
     retval.append( "    " ).append( XMLHandler.addTagValue( "segmentId", segmentId ) );
     retval.append( "    " ).append( XMLHandler.addTagValue( "segmentName", segmentName ) );
     retval.append( "    " ).append( XMLHandler.addTagValue( "rowLimit", rowLimit ) );
+    retval.append( "    " ).append( XMLHandler.addTagValue( "connectionTimeout", gaConnectionTimeout ) );
+    retval.append( "    " ).append( XMLHandler.addTagValue( "readTimeout", gaReadTimeout ) );
 
     for ( int i = 0; i < feedField.length; i++ ) {
       retval.append( "      <feedField>" ).append( Const.CR );
@@ -416,6 +441,8 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
       segmentId = XMLHandler.getTagValue( stepnode, "segmentId" );
       segmentName = XMLHandler.getTagValue( stepnode, "segmentName" );
       rowLimit = Const.toInt( XMLHandler.getTagValue( stepnode, "rowLimit" ), 0 );
+      gaConnectionTimeout = XMLHandler.getTagValue( stepnode, "connectionTimeout" );
+      gaReadTimeout = XMLHandler.getTagValue( stepnode, "readTimeout" );
 
       allocate( 0 );
 
@@ -476,6 +503,8 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
       segmentId = rep.getStepAttributeString( id_step, "segmentId" );
       segmentName = rep.getStepAttributeString( id_step, "segmentName" );
       rowLimit = (int) rep.getStepAttributeInteger( id_step, "rowLimit" );
+      gaConnectionTimeout = rep.getStepAttributeString( id_step, "connectionTimeout" );
+      gaReadTimeout = rep.getStepAttributeString( id_step, "readTimeout" );
 
       int nrFields = rep.countNrStepAttributes( id_step, "feedField" );
       allocate( nrFields );
@@ -519,6 +548,8 @@ public class GaInputStepMeta extends BaseStepMeta implements StepMetaInterface {
       rep.saveStepAttribute( id_transformation, id_step, "segmentId", segmentId );
       rep.saveStepAttribute( id_transformation, id_step, "segmentName", segmentName );
       rep.saveStepAttribute( id_transformation, id_step, "rowLimit", rowLimit );
+      rep.saveStepAttribute( id_transformation, id_step, "connectionTimeout", gaConnectionTimeout );
+      rep.saveStepAttribute( id_transformation, id_step, "readTimeout", gaReadTimeout );
 
       for ( int i = 0; i < feedField.length; i++ ) {
         rep.saveStepAttribute( id_transformation, id_step, i, "feedFieldType", feedFieldType[ i ] );
